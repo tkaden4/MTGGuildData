@@ -56,9 +56,9 @@ export const PlacementStatistics = ({
     <Table celled compact inverted striped textAlign="center" unstackable>
       <Table.Header>
         <Table.Row>
-          <Table.HeaderCell>Group</Table.HeaderCell>
-          <Table.HeaderCell></Table.HeaderCell>
-          <Table.HeaderCell>Overall</Table.HeaderCell>
+          <Table.HeaderCell width="1">Group</Table.HeaderCell>
+          <Table.HeaderCell width="1"></Table.HeaderCell>
+          <Table.HeaderCell width="1">Overall</Table.HeaderCell>
           {decks.map((deck, i) => (
             <Table.HeaderCell key={i}>{deck}</Table.HeaderCell>
           ))}
@@ -172,8 +172,9 @@ export const WinRates: React.FunctionComponent<{
   decks: string[];
   players: string[];
 }> = ({ magicData, unweighted = false, decks, players }) => {
-  const results = players.map(player => {
-    const overallGames = countPlacements(magicData, [player], decks, [
+  const pdata = players.map(x => magicData.players.find(y => y === x));
+  const results = pdata.map(player => {
+    const overallGames = countPlacements(magicData, [player], magicData.decks, [
       [1, 1],
       [2, 1],
       [3, 1],
@@ -183,7 +184,7 @@ export const WinRates: React.FunctionComponent<{
     const overallWins = countPlacements(
       magicData,
       [player],
-      decks,
+      magicData.decks,
       unweighted
         ? [[1, 1]]
         : [
@@ -213,9 +214,9 @@ export const WinRates: React.FunctionComponent<{
         unweighted
           ? [[1, 1]]
           : [
-              [1, 1],
-              [2, 0.25],
-              [3, 0.12]
+              [1, 0.6],
+              [2, 0.3],
+              [3, 0.1]
             ]
       );
       const losses = playerTotal - wins;
@@ -236,9 +237,9 @@ export const WinRates: React.FunctionComponent<{
     <Table celled compact inverted striped unstackable textAlign="center">
       <Table.Header>
         <Table.Row>
-          <Table.HeaderCell>Player</Table.HeaderCell>
-          <Table.HeaderCell></Table.HeaderCell>
-          <Table.HeaderCell>Overall</Table.HeaderCell>
+          <Table.HeaderCell width="1">Player</Table.HeaderCell>
+          <Table.HeaderCell width="1"></Table.HeaderCell>
+          <Table.HeaderCell width="1">Overall</Table.HeaderCell>
           {decks.map((deck, i) => (
             <Table.HeaderCell key={i}>{deck}</Table.HeaderCell>
           ))}
@@ -284,7 +285,7 @@ export const WinRates: React.FunctionComponent<{
 };
 
 export const Analysis: React.FunctionComponent<{ magicData: MagicData }> = ({ magicData }) => {
-  const top = deckStatistics(magicData, magicData.df.getSeries<string>("player").toArray());
+  const top = deckStatistics(magicData, magicData.players);
   const playerDeckStats = magicData.players.map(player => tuple(player, deckStatistics(magicData, [player])));
   const deckSummary = summary(magicData);
 
