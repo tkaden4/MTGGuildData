@@ -1,0 +1,38 @@
+{
+  "name": "commando",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "parcel build src/index.html --out-dir docs"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.149",
+    "@types/node": "^13.7.0",
+    "@types/papaparse": "^5.0.3",
+    "@types/react-plotly.js": "^2.2.4",
+    "parcel-bundler": "^1.12.4",
+    "typescript": "^3.7.5",
+    "@types/react": "^16.9.19",
+    "@types/react-dom": "^16.9.5"
+  },
+  "dependencies": {
+    "@tensorflow/tfjs": "^1.5.2",
+    "@tensorflow/tfjs-node": "^1.5.2",
+    "axios": "^0.19.2",
+    "core-js": "3",
+    "data-forge": "^1.7.7",
+    "fp-ts": "^2.4.4",
+    "lodash": "^4.17.15",
+    "machinelearn": "^2.1.5",
+    "pandas-js": "^0.2.4",
+    "papaparse": "^5.1.1",
+    "plotly.js": "^1.52.2",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "react-plotly.js": "^2.4.0",
+    "seedrandom": "~2.4.3",
+    "semantic-ui-react": "^0.88.2",
+    "ununknown": "^0.4.3"
+  }
+}
