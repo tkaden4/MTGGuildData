@@ -227,7 +227,8 @@ export const WinRates: React.FunctionComponent<{
         wins,
         losses,
         winRate: wins / (playerTotal || 1),
-        lossRate: losses / (playerTotal || 1)
+        lossRate: losses / (playerTotal || 1),
+        noData: wins === losses && losses === 0
       };
     });
   });
@@ -260,7 +261,7 @@ export const WinRates: React.FunctionComponent<{
                 </Table.Cell>
                 {ordered.map((deckRate, i) => (
                   <Table.Cell collapsing key={i}>
-                    {deckRate === undefined ? "—" : trunc(deckRate.winRate, 2)}
+                    {deckRate === undefined || deckRate.noData ? "—" : trunc(deckRate.winRate, 2)}
                   </Table.Cell>
                 ))}
               </Table.Row>
@@ -271,7 +272,7 @@ export const WinRates: React.FunctionComponent<{
                 </Table.Cell>
                 {ordered.map((deckRate, i) => (
                   <Table.Cell collapsing key={i}>
-                    {deckRate === undefined ? "—" : trunc(deckRate.lossRate, 2)}
+                    {deckRate === undefined || deckRate.noData ? "—" : trunc(deckRate.lossRate, 2)}
                   </Table.Cell>
                 ))}
               </Table.Row>
