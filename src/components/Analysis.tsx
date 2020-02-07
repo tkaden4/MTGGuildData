@@ -152,7 +152,6 @@ export const DeckSummary = ({
           );
         })}
       </Card.Group>
-      e{" "}
       <Segment textAlign="center">
         <Overflow>
           <Plot
