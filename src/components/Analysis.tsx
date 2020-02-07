@@ -3,7 +3,7 @@ import _ from "lodash";
 import * as React from "react";
 import Plot from "react-plotly.js";
 import { Card, Header, Table, Segment } from "semantic-ui-react";
-import { deckStatistics, MagicData, summary, countPlacements } from "../analysis";
+import { deckStatistics, MagicData, summary, countPlacements, normalizeToPoints } from "../analysis";
 
 export const trunc = (n: number, to: number): string => (Math.round(n * 10 ** to) / 10 ** to).toFixed(to);
 
@@ -28,6 +28,10 @@ export const decks = {
   selesnya: { colors: [colors.green, colors.white], path: require("../../guilds/selesnya.jpg") }
 } as const;
 
+export const Overflow = ({ children }) => {
+  return <div style={{ overflowX: "auto", width: "100%" }}>{children}</div>;
+};
+
 export const PlacementStatistics = ({
   stats,
   decks
@@ -43,11 +47,11 @@ export const PlacementStatistics = ({
   decks: string[];
 }) => {
   return (
-    <Table celled compact inverted striped textAlign="center">
+    <Table celled compact inverted striped textAlign="center" unstackable>
       <Table.Header>
         <Table.Row>
           <Table.HeaderCell>Group</Table.HeaderCell>
-          <Table.HeaderCell>Statistic</Table.HeaderCell>
+          <Table.HeaderCell></Table.HeaderCell>
           <Table.HeaderCell>Overall</Table.HeaderCell>
           {decks.map((deck, i) => (
             <Table.HeaderCell key={i}>{deck}</Table.HeaderCell>
@@ -98,7 +102,7 @@ export const DeckSummary = ({
 }) => {
   return (
     <React.Fragment>
-      <Card.Group centered itemsPerRow={5}>
+      <Card.Group centered doubling itemsPerRow={5}>
         {deckSummary.map((deck, i) => {
           const [fst, snd] = decks[deck.deck.trim().toLowerCase() as keyof typeof decks].colors;
           return (
@@ -133,17 +137,24 @@ export const DeckSummary = ({
           );
         })}
       </Card.Group>
+      {/* FIXME */}
       <Segment textAlign="center">
-        <Plot
-          data={[{ type: "bar", x: deckSummary.map(x => x.deck), y: deckSummary.map(y => y.timesPlayed) }]}
-          layout={{ title: "Usage per deck" }}
-        />
+        <div style={{ overflowX: "scroll", position: "relative", width: "100%" }}>
+          <Plot
+            data={[{ type: "bar", x: deckSummary.map(x => x.deck), y: deckSummary.map(y => y.timesPlayed) }]}
+            layout={{ title: "Usage per deck" }}
+            config={{ responsive: false }}
+          />
+        </div>
       </Segment>
     </React.Fragment>
   );
 };
 
-export const WinRates: React.FunctionComponent<{ magicData: MagicData }> = ({ magicData }) => {
+export const WinRates: React.FunctionComponent<{ magicData: MagicData; unweighted?: boolean }> = ({
+  magicData,
+  unweighted = false
+}) => {
   const { players, decks } = magicData;
 
   const results = players.map(player => {
@@ -154,17 +165,19 @@ export const WinRates: React.FunctionComponent<{ magicData: MagicData }> = ({ ma
       [4, 1],
       [5, 1]
     ]);
-    const overallWins = countPlacements(magicData, [player], decks, [
-      [1, 1],
-      [2, 0.25],
-      [3, 0.12]
-    ]);
-    const overallLosses = countPlacements(magicData, [player], decks, [
-      [2, 0.75],
-      [3, 0.88],
-      [4, 1],
-      [5, 1]
-    ]);
+    const overallWins = countPlacements(
+      magicData,
+      [player],
+      decks,
+      unweighted
+        ? [[1, 1]]
+        : [
+            [1, 0.6],
+            [2, 0.3],
+            [3, 0.1]
+          ]
+    );
+    const overallLosses = overallGames - overallWins;
     return decks.map(deck => {
       const playerTotal = countPlacements(
         magicData,
@@ -182,23 +195,15 @@ export const WinRates: React.FunctionComponent<{ magicData: MagicData }> = ({ ma
         magicData,
         [player],
         [deck],
-        [
-          [1, 1],
-          [2, 0.25],
-          [3, 0.12]
-        ]
+        unweighted
+          ? [[1, 1]]
+          : [
+              [1, 1],
+              [2, 0.25],
+              [3, 0.12]
+            ]
       );
-      const losses = countPlacements(
-        magicData,
-        [player],
-        [deck],
-        [
-          [2, 0.75],
-          [3, 0.88],
-          [4, 1],
-          [5, 1]
-        ]
-      );
+      const losses = playerTotal - wins;
       return {
         player,
         overallWinRate: overallWins / (overallGames || 1),
@@ -213,7 +218,7 @@ export const WinRates: React.FunctionComponent<{ magicData: MagicData }> = ({ ma
   });
 
   return (
-    <Table celled compact inverted striped textAlign="center">
+    <Table celled compact inverted striped unstackable textAlign="center">
       <Table.Header>
         <Table.Row>
           <Table.HeaderCell>Player</Table.HeaderCell>
@@ -261,17 +266,28 @@ export const Analysis: React.FunctionComponent<{ magicData: MagicData }> = ({ ma
   const top = deckStatistics(magicData, magicData.df.getSeries<string>("player").toArray());
   const playerDeckStats = magicData.players.map(player => tuple(player, deckStatistics(magicData, [player])));
   const deckSummary = summary(magicData);
+  const normalized = normalizeToPoints(magicData);
   return (
     <>
       <Header size="large">Deck Usage</Header>
       <DeckSummary magicData={magicData} deckSummary={deckSummary} />
       <Header size="large">Deck Placement Statistics</Header>
-      <PlacementStatistics stats={[["Overall", top], ...playerDeckStats]} decks={magicData.decks} />
+      <Overflow>
+        <PlacementStatistics stats={[["Overall", top], ...playerDeckStats]} decks={magicData.decks} />
+      </Overflow>
       <Header size="large">
-        Win Rates
+        Player Win Rates
+        <Header.Subheader>Unweighted</Header.Subheader>
+      </Header>
+      <Overflow>
+        <WinRates magicData={magicData} unweighted />
+      </Overflow>
+      <Header size="large">
         <Header.Subheader>Weighted</Header.Subheader>
       </Header>
-      <WinRates magicData={magicData} />
+      <Overflow>
+        <WinRates magicData={magicData} />
+      </Overflow>
     </>
   );
 };

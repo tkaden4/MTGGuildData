@@ -29,7 +29,7 @@ export interface PlayerData {
   relativePlacement: number;
 }
 
-const somes = <T>(as: Option<T>[]) => array.filterMap(as, identity);
+const somes = <T>(as: Option<T>[]): T[] => array.filterMap(as, identity);
 
 export const toMagicData = (data: unknown): MagicData => {
   const parser = un.array.of(un.array.of(un.thing.is.string));
@@ -41,7 +41,7 @@ export const toMagicData = (data: unknown): MagicData => {
     somes(
       x.map((y, i) =>
         option.map(fromPredicate<string>(from => from !== "")(y ?? ""), (person: string) => ({
-          player: _.split(person, " ")[1].trim(),
+          player: _.capitalize(_.split(person, " ")[1].trim()),
           deck: decks[i],
           placement: +_.split(person, " ")[0]
         }))
@@ -49,7 +49,7 @@ export const toMagicData = (data: unknown): MagicData => {
     )
   );
   const withRelativePlacement = byGame.map((game, i) => {
-    const sorted = game.map(player => player.placement).sort();
+    const sorted = _.uniq(game.map(player => player.placement).sort());
     return game.map(player => ({
       ...player,
       game: i,
@@ -92,7 +92,20 @@ export const getMagicData = taskEither.tryCatch(
   e => (e instanceof Error ? e : new Error(`Could not fetch magic data at "${magicData}"`))
 );
 
-export function summary(data: MagicData) {
+export interface PlayedBy {
+  player: string;
+  count: number;
+}
+
+export interface DeckSummary {
+  deck: string;
+  timesPlayed: number;
+  playedBy: Array<PlayedBy>;
+}
+
+export type Summary = Array<DeckSummary>;
+
+export function summary(data: MagicData): Summary {
   const df = data.df;
   const deckStats = df
     .groupBy(x => x.deck)
@@ -115,14 +128,28 @@ export function toSampleDeviation(popVariance: number, n: number) {
   return (popVariance * Math.sqrt(n)) / (n - 1 <= 1 ? 1 : Math.sqrt(n - 1));
 }
 
-export function deckStatistics(data: MagicData, forp: Array<string>) {
+export interface DeckStatistic {
+  player: string;
+  deck: string;
+  frequency: number;
+  averagePlacement: number;
+  deviation: number;
+}
+
+export interface DeckStatistics {
+  overallDeviation: number;
+  overallMean: number;
+  stats: Array<DeckStatistic>;
+}
+
+export function deckStatistics(data: MagicData, forp: Array<string>): DeckStatistics {
   const df = data.df.setIndex<string>("deck");
   const includes = df.where(row => forp.includes(row.player));
   const deckPlacementRatings = includes
     .groupBy(x => x.deck)
     .select(group => ({
       player: group.first().player,
-      deck: group.getIndex().at(0),
+      deck: group.getIndex().at(0)!,
       frequency: group.count(),
       averagePlacement: group.getSeries("placement").average(),
       deviation: toSampleDeviation(group.getSeries("placement").std(), group.count())
@@ -158,4 +185,18 @@ export function countPlacements(
     const weight = (placements.find(y => y[0] === x.relativePlacement) ?? [1, 1])[1] ?? 1;
     return acc + weight;
   }, 0);
+}
+
+export function normalizeToPoints(data: MagicData) {
+  const df = data.df;
+  const res = df
+    .groupBy(x => x.game)
+    .select(gameGroup => {
+      const sum = gameGroup.getSeries("placement").sum();
+      return gameGroup.select(player => ({
+        ...player,
+        points: player.placement / sum
+      }));
+    });
+  return res.toArray().flatMap(x => x.toArray());
 }
