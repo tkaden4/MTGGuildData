@@ -64,18 +64,22 @@ export const PlacementStatistics = ({
           return (
             <React.Fragment key={i}>
               <Table.Row>
-                <Table.Cell rowSpan={2}>{_.capitalize(person).trim()}</Table.Cell>
-                <Table.Cell>μ</Table.Cell>
-                <Table.Cell>{trunc(overallMean, 2)}</Table.Cell>
+                <Table.Cell collapsing rowSpan={2}>
+                  {_.capitalize(person).trim()}
+                </Table.Cell>
+                <Table.Cell collapsing>μ</Table.Cell>
+                <Table.Cell collapsing>{trunc(overallMean, 2)}</Table.Cell>
                 {ordered.map((topDeck, i) => (
                   <Table.Cell key={i}>{topDeck === undefined ? "—" : trunc(topDeck.averagePlacement, 2)}</Table.Cell>
                 ))}
               </Table.Row>
               <Table.Row>
-                <Table.Cell>s</Table.Cell>
-                <Table.Cell>{trunc(overallDeviation, 2)}</Table.Cell>
+                <Table.Cell collapsing>s</Table.Cell>
+                <Table.Cell collapsing>{trunc(overallDeviation, 2)}</Table.Cell>
                 {ordered.map((topDeck, i) => (
-                  <Table.Cell key={i}>{topDeck === undefined ? "—" : trunc(topDeck.deviation, 1)}</Table.Cell>
+                  <Table.Cell collapsing key={i}>
+                    {topDeck === undefined ? "—" : trunc(topDeck.deviation, 1)}
+                  </Table.Cell>
                 ))}
               </Table.Row>
             </React.Fragment>
@@ -236,22 +240,28 @@ export const WinRates: React.FunctionComponent<{ magicData: MagicData; unweighte
           return (
             <React.Fragment key={i}>
               <Table.Row>
-                <Table.Cell rowSpan={2}>{_.capitalize(person).trim()}</Table.Cell>
-                <Table.Cell>Win %</Table.Cell>
-                <Table.Cell>
+                <Table.Cell collapsing rowSpan={2}>
+                  {_.capitalize(person).trim()}
+                </Table.Cell>
+                <Table.Cell collapsing>Win %</Table.Cell>
+                <Table.Cell collapsing>
                   {ordered[0]?.overallWinRate === undefined ? "—" : trunc(ordered[0]?.overallWinRate, 2)}
                 </Table.Cell>
                 {ordered.map((deckRate, i) => (
-                  <Table.Cell key={i}>{deckRate === undefined ? "—" : trunc(deckRate.winRate, 2)}</Table.Cell>
+                  <Table.Cell collapsing key={i}>
+                    {deckRate === undefined ? "—" : trunc(deckRate.winRate, 2)}
+                  </Table.Cell>
                 ))}
               </Table.Row>
               <Table.Row>
-                <Table.Cell>Loss %</Table.Cell>
-                <Table.Cell>
+                <Table.Cell collapsing>Loss %</Table.Cell>
+                <Table.Cell collapsing>
                   {ordered[0]?.overallLossRate === undefined ? "—" : trunc(ordered[0]?.overallLossRate, 2)}
                 </Table.Cell>
                 {ordered.map((deckRate, i) => (
-                  <Table.Cell key={i}>{deckRate === undefined ? "—" : trunc(deckRate.lossRate, 2)}</Table.Cell>
+                  <Table.Cell collapsing key={i}>
+                    {deckRate === undefined ? "—" : trunc(deckRate.lossRate, 2)}
+                  </Table.Cell>
                 ))}
               </Table.Row>
             </React.Fragment>

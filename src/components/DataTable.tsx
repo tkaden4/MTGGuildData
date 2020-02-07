@@ -33,9 +33,9 @@ export const DataTable: React.FunctionComponent<Props> = ({ magicData }) => {
         tableData={magicData.games}
         renderBodyRow={(game: Game, i) => (
           <Table.Row key={i}>
-            <Table.Cell>{i + 1}</Table.Cell>
+            <Table.Cell collapsing>{i + 1}</Table.Cell>
             {magicData.decks.map((deck, i) => (
-              <Table.Cell key={i}>
+              <Table.Cell collapsing key={i}>
                 {game.decks[deck] === undefined ? (
                   <></>
                 ) : (
