@@ -3,7 +3,7 @@ import * as React from "react";
 import { MagicData, getMagicData } from "../analysis";
 import { taskEither } from "fp-ts/lib/TaskEither";
 import { DataTable } from "./DataTable";
-import { Divider, Container, Segment, Image, Header, Loader } from "semantic-ui-react";
+import { Divider, Container, Segment, Header, Loader } from "semantic-ui-react";
 import { DataFrame } from "data-forge";
 
 export const Index = () => {

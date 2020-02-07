@@ -2,8 +2,11 @@ import { tuple } from "fp-ts/lib/function";
 import _ from "lodash";
 import * as React from "react";
 import Plot from "react-plotly.js";
-import { Card, Header, Table, Segment } from "semantic-ui-react";
+import { Card, Header, Table, Segment, Form, Grid, Divider } from "semantic-ui-react";
+import { remove, toArray, insert } from "fp-ts/lib/Set";
 import { deckStatistics, MagicData, summary, countPlacements, normalizeToPoints } from "../analysis";
+import { ordString } from "fp-ts/lib/Ord";
+import { eqString } from "fp-ts/lib/Eq";
 
 export const trunc = (n: number, to: number): string => (Math.round(n * 10 ** to) / 10 ** to).toFixed(to);
 
@@ -15,7 +18,7 @@ const colors = {
   black: "#0a0a0c"
 };
 
-export const decks = {
+export const deckData = {
   azorius: { colors: [colors.blue, colors.white], path: require("../../guilds/azorius.jpg") },
   dimir: { colors: [colors.blue, colors.black], path: require("../../guilds/dimir.jpg") },
   simic: { colors: [colors.blue, colors.green], path: require("../../guilds/simic.jpg") },
@@ -34,7 +37,8 @@ export const Overflow = ({ children }) => {
 
 export const PlacementStatistics = ({
   stats,
-  decks
+  decks,
+  players
 }: {
   stats: [
     string,
@@ -45,7 +49,9 @@ export const PlacementStatistics = ({
     }
   ][];
   decks: string[];
+  players: string[];
 }) => {
+  const ordered = players.map(x => stats.find(y => y[0] === x));
   return (
     <Table celled compact inverted striped textAlign="center" unstackable>
       <Table.Header>
@@ -59,32 +65,34 @@ export const PlacementStatistics = ({
         </Table.Row>
       </Table.Header>
       <Table.Body>
-        {stats.map(([person, { stats: stat, overallDeviation, overallMean }], i) => {
-          const ordered = decks.map(deck => stat.find(x => x.deck === deck));
-          return (
-            <React.Fragment key={i}>
-              <Table.Row>
-                <Table.Cell collapsing rowSpan={2}>
-                  {_.capitalize(person).trim()}
-                </Table.Cell>
-                <Table.Cell collapsing>μ</Table.Cell>
-                <Table.Cell collapsing>{trunc(overallMean, 2)}</Table.Cell>
-                {ordered.map((topDeck, i) => (
-                  <Table.Cell key={i}>{topDeck === undefined ? "—" : trunc(topDeck.averagePlacement, 2)}</Table.Cell>
-                ))}
-              </Table.Row>
-              <Table.Row>
-                <Table.Cell collapsing>s</Table.Cell>
-                <Table.Cell collapsing>{trunc(overallDeviation, 2)}</Table.Cell>
-                {ordered.map((topDeck, i) => (
-                  <Table.Cell collapsing key={i}>
-                    {topDeck === undefined ? "—" : trunc(topDeck.deviation, 1)}
+        {ordered
+          .filter(p => players.includes(p[0]))
+          .map(([person, { stats: stat, overallDeviation, overallMean }], i) => {
+            const ordered = decks.map(deck => stat.find(x => x.deck === deck));
+            return (
+              <React.Fragment key={i}>
+                <Table.Row>
+                  <Table.Cell collapsing rowSpan={2}>
+                    {_.capitalize(person).trim()}
                   </Table.Cell>
-                ))}
-              </Table.Row>
-            </React.Fragment>
-          );
-        })}
+                  <Table.Cell collapsing>μ</Table.Cell>
+                  <Table.Cell collapsing>{trunc(overallMean, 2)}</Table.Cell>
+                  {ordered.map((topDeck, i) => (
+                    <Table.Cell key={i}>{topDeck === undefined ? "—" : trunc(topDeck.averagePlacement, 2)}</Table.Cell>
+                  ))}
+                </Table.Row>
+                <Table.Row>
+                  <Table.Cell collapsing>s</Table.Cell>
+                  <Table.Cell collapsing>{trunc(overallDeviation, 2)}</Table.Cell>
+                  {ordered.map((topDeck, i) => (
+                    <Table.Cell collapsing key={i}>
+                      {topDeck === undefined ? "—" : trunc(topDeck.deviation, 1)}
+                    </Table.Cell>
+                  ))}
+                </Table.Row>
+              </React.Fragment>
+            );
+          })}
       </Table.Body>
     </Table>
   );
@@ -92,7 +100,8 @@ export const PlacementStatistics = ({
 
 export const DeckSummary = ({
   magicData,
-  deckSummary
+  deckSummary,
+  decks
 }: {
   magicData: MagicData;
   deckSummary: {
@@ -103,12 +112,14 @@ export const DeckSummary = ({
       count: number;
     }[];
   }[];
+  decks: string[];
+  players: string[];
 }) => {
   return (
     <React.Fragment>
       <Card.Group centered doubling itemsPerRow={5}>
         {deckSummary.map((deck, i) => {
-          const [fst, snd] = decks[deck.deck.trim().toLowerCase() as keyof typeof decks].colors;
+          const [fst, snd] = deckData[deck.deck.trim().toLowerCase() as keyof typeof decks].colors;
           return (
             <Card key={i} color="black">
               <div
@@ -141,26 +152,26 @@ export const DeckSummary = ({
           );
         })}
       </Card.Group>
-      {/* FIXME */}
+      e{" "}
       <Segment textAlign="center">
-        <div style={{ overflowX: "scroll", position: "relative", width: "100%" }}>
+        <Overflow>
           <Plot
             data={[{ type: "bar", x: deckSummary.map(x => x.deck), y: deckSummary.map(y => y.timesPlayed) }]}
             layout={{ title: "Usage per deck" }}
             config={{ responsive: false }}
           />
-        </div>
+        </Overflow>
       </Segment>
     </React.Fragment>
   );
 };
 
-export const WinRates: React.FunctionComponent<{ magicData: MagicData; unweighted?: boolean }> = ({
-  magicData,
-  unweighted = false
-}) => {
-  const { players, decks } = magicData;
-
+export const WinRates: React.FunctionComponent<{
+  magicData: MagicData;
+  unweighted?: boolean;
+  decks: string[];
+  players: string[];
+}> = ({ magicData, unweighted = false, decks, players }) => {
   const results = players.map(player => {
     const overallGames = countPlacements(magicData, [player], decks, [
       [1, 1],
@@ -276,27 +287,86 @@ export const Analysis: React.FunctionComponent<{ magicData: MagicData }> = ({ ma
   const top = deckStatistics(magicData, magicData.df.getSeries<string>("player").toArray());
   const playerDeckStats = magicData.players.map(player => tuple(player, deckStatistics(magicData, [player])));
   const deckSummary = summary(magicData);
-  const normalized = normalizeToPoints(magicData);
+
+  const [parameters, setParameters] = React.useState({ players: new Set([]), decks: new Set([]) });
+  React.useEffect(() => {
+    setParameters({
+      players: new Set(magicData.players),
+      decks: new Set(magicData.decks)
+    });
+  }, [magicData]);
+
+  const playerArr = toArray(ordString)(parameters.players);
+  const deckArr = toArray(ordString)(parameters.decks);
+
   return (
     <>
       <Header size="large">Deck Usage</Header>
-      <DeckSummary magicData={magicData} deckSummary={deckSummary} />
+      <DeckSummary magicData={magicData} deckSummary={deckSummary} decks={deckArr} players={playerArr} />
+      <Header size="huge">Statistics</Header>
+      <Segment compact padded>
+        <Header size="large">Select Parameters</Header>
+        <Divider />
+        <Divider hidden />
+        <Grid>
+          <Form.Group grouped>
+            {magicData.players.map((player, i) => {
+              return (
+                <Form.Checkbox
+                  key={i}
+                  defaultChecked
+                  onChange={(e, p) => {
+                    setParameters({
+                      ...parameters,
+                      players: p.checked
+                        ? insert(eqString)(player)(parameters.players)
+                        : remove(eqString)(player)(parameters.players)
+                    });
+                  }}
+                  type="checkbox"
+                  label={player}
+                ></Form.Checkbox>
+              );
+            })}
+          </Form.Group>
+          <Form.Group grouped>
+            {magicData.decks.map((deck, i) => {
+              return (
+                <Form.Checkbox
+                  key={i}
+                  defaultChecked
+                  type="checkbox"
+                  onChange={(e, p) => {
+                    setParameters({
+                      ...parameters,
+                      decks: p.checked
+                        ? insert(eqString)(deck)(parameters.decks)
+                        : remove(eqString)(deck)(parameters.decks)
+                    });
+                  }}
+                  label={deck}
+                ></Form.Checkbox>
+              );
+            })}
+          </Form.Group>
+        </Grid>
+      </Segment>
       <Header size="large">Deck Placement Statistics</Header>
       <Overflow>
-        <PlacementStatistics stats={[["Overall", top], ...playerDeckStats]} decks={magicData.decks} />
+        <PlacementStatistics stats={[["Overall", top], ...playerDeckStats]} decks={deckArr} players={playerArr} />
       </Overflow>
       <Header size="large">
         Player Win Rates
         <Header.Subheader>Unweighted</Header.Subheader>
       </Header>
       <Overflow>
-        <WinRates magicData={magicData} unweighted />
+        <WinRates magicData={magicData} unweighted decks={deckArr} players={playerArr} />
       </Overflow>
       <Header size="large">
         <Header.Subheader>Weighted</Header.Subheader>
       </Header>
       <Overflow>
-        <WinRates magicData={magicData} />
+        <WinRates magicData={magicData} decks={deckArr} players={playerArr} />
       </Overflow>
     </>
   );
