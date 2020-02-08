@@ -4,11 +4,23 @@ import * as React from "react";
 import Plot from "react-plotly.js";
 import { Card, Header, Table, Segment, Form, Grid, Divider } from "semantic-ui-react";
 import { remove, toArray, insert } from "fp-ts/lib/Set";
-import { deckStatistics, MagicData, summary, countPlacements, normalizeToPoints } from "../analysis";
+import * as fpSet from "fp-ts/lib/Set";
+import { deckStatistics, MagicData, summary, countPlacements } from "../analysis";
 import { ordString } from "fp-ts/lib/Ord";
-import { eqString } from "fp-ts/lib/Eq";
+import { eqString, Eq } from "fp-ts/lib/Eq";
+import { array, flatten } from "fp-ts/lib/Array";
 
 export const trunc = (n: number, to: number): string => (Math.round(n * 10 ** to) / 10 ** to).toFixed(to);
+
+export function subsets<T>(eq: Eq<T>, set: Set<T>, min: number = 1): Array<Set<T>> {
+  if (set.size < min) {
+    return [set];
+  } else {
+    const fst = set.values().next().value as T;
+    const other = subsets(eq, remove(eq)(fst)(set));
+    return array.chain(other, set => [insert(eq)(fst)(set), set]);
+  }
+}
 
 const colors = {
   green: "limegreen",
@@ -100,8 +112,7 @@ export const PlacementStatistics = ({
 
 export const DeckSummary = ({
   magicData,
-  deckSummary,
-  decks
+  deckSummary
 }: {
   magicData: MagicData;
   deckSummary: {
@@ -112,14 +123,27 @@ export const DeckSummary = ({
       count: number;
     }[];
   }[];
-  decks: string[];
-  players: string[];
 }) => {
+  const playedSubsets = fpSet.fromArray(fpSet.getEq(eqString))(
+    flatten(magicData.games.map(game => subsets(eqString, new Set(_.keys(game.decks)), 2)))
+  );
+
+  const possibleSubsets = fpSet.fromArray(fpSet.getEq(eqString))(
+    subsets(eqString, new Set(magicData.decks), 2).filter(x => x.size <= 2)
+  );
+
+  const difference = fpSet.difference(fpSet.getEq(eqString))(possibleSubsets, playedSubsets);
+  const unplayed = fpSet.filter((x: Set<string>) => x.size <= 5)(difference);
+
+  fpSet;
+
+  const couples = Array.from(fpSet.filter((x: Set<string>) => x.size === 2)(unplayed));
+
   return (
     <React.Fragment>
       <Card.Group centered doubling itemsPerRow={5}>
         {deckSummary.map((deck, i) => {
-          const [fst, snd] = deckData[deck.deck.trim().toLowerCase() as keyof typeof decks].colors;
+          const [fst, snd] = deckData[deck.deck.trim().toLowerCase() as keyof typeof magicData.decks].colors;
           return (
             <Card key={i} color="black">
               <div
@@ -160,6 +184,12 @@ export const DeckSummary = ({
             config={{ responsive: false }}
           />
         </Overflow>
+      </Segment>
+      <Segment>
+        <Header size="medium">Unplayed Combinations</Header>
+        {couples.map((each, i) => (
+          <div key={i}>{Array.from(each).join(", ")}</div>
+        ))}
       </Segment>
     </React.Fragment>
   );
@@ -287,7 +317,6 @@ export const WinRates: React.FunctionComponent<{
 export const Analysis: React.FunctionComponent<{ magicData: MagicData }> = ({ magicData }) => {
   const top = deckStatistics(magicData, magicData.players);
   const playerDeckStats = magicData.players.map(player => tuple(player, deckStatistics(magicData, [player])));
-  const deckSummary = summary(magicData);
 
   const [parameters, setParameters] = React.useState({ players: new Set([]), decks: new Set([]) });
   React.useEffect(() => {
@@ -302,8 +331,6 @@ export const Analysis: React.FunctionComponent<{ magicData: MagicData }> = ({ ma
 
   return (
     <>
-      <Header size="large">Deck Usage</Header>
-      <DeckSummary magicData={magicData} deckSummary={deckSummary} decks={deckArr} players={playerArr} />
       <Header size="huge">Statistics</Header>
       <Segment compact padded>
         <Header size="large">Select Parameters</Header>
