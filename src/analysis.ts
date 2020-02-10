@@ -150,14 +150,14 @@ export function deckStatistics(data: MagicData, forp: Array<string>): DeckStatis
       player: group.first().player,
       deck: group.getIndex().at(0)!,
       frequency: group.count(),
-      averagePlacement: group.getSeries("relativePlacement").average(),
-      deviation: toSampleDeviation(group.getSeries("relativePlacement").std(), group.count())
+      averagePlacement: group.getSeries("placement").average(),
+      deviation: toSampleDeviation(group.getSeries("placement").std(), group.count())
     }))
     .orderBy(deckStat => deckStat.averagePlacement)
     .toArray();
   const overall = {
-    deviation: toSampleDeviation(includes.getSeries("relativePlacement").std(), includes.count()),
-    mean: includes.getSeries("relativePlacement").average()
+    deviation: toSampleDeviation(includes.getSeries("placement").std(), includes.count()),
+    mean: includes.getSeries("placement").average()
   };
   return {
     overallDeviation: overall.deviation,
