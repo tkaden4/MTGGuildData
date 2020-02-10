@@ -1,4 +1,3 @@
-import magicData from "../data/initial.csv";
 import axios from "axios";
 import * as taskEither from "fp-ts/lib/TaskEither";
 import * as Papa from "papaparse";
@@ -84,12 +83,12 @@ export const toMagicData = (data: unknown): MagicData => {
 export const getMagicData = taskEither.tryCatch(
   () =>
     axios
-      .get(magicData)
+      .get("https://docs.google.com/spreadsheets/d/1-4TG_nvx3o6YtySNK7nMNnz2W5UnSk2UxYi2FBqAoB0/export?format=csv")
       .then(response => response.data as string)
       .then(bodyData => Papa.parse(bodyData))
-      .then(result => result.data)
+      .then(result => result.data.slice(0, result.data.length - 7))
       .then(resultData => toMagicData(resultData)),
-  e => (e instanceof Error ? e : new Error(`Could not fetch magic data at "${magicData}"`))
+  e => (e instanceof Error ? e : new Error("Could not fetch magic data"))
 );
 
 export interface PlayedBy {

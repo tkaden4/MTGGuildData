@@ -135,8 +135,6 @@ export const DeckSummary = ({
   const difference = fpSet.difference(fpSet.getEq(eqString))(possibleSubsets, playedSubsets);
   const unplayed = fpSet.filter((x: Set<string>) => x.size <= 5)(difference);
 
-  fpSet;
-
   const couples = Array.from(fpSet.filter((x: Set<string>) => x.size === 2)(unplayed));
 
   return (
@@ -156,20 +154,28 @@ export const DeckSummary = ({
                 <Card.Header>{deck.deck === "Eggs" ? "🥚🥚🥚" : deck.deck}</Card.Header>
                 <Card.Meta>Played {deck.timesPlayed} times</Card.Meta>
                 <Card.Description>
-                  Has not been played by:{" "}
-                  {magicData.players
-                    .filter(player => !deck.playedBy.map(x => x.player).includes(player))
-                    .reduce(
-                      (acc, x, i) => (
-                        <span>
-                          <strong>
-                            <i>{_.capitalize(x)}</i>
-                          </strong>
-                          {i !== 0 ? ", " : ""} {acc}
-                        </span>
-                      ),
-                      <span></span>
-                    )}
+                  {(function() {
+                    const unplayedBy = magicData.players.filter(
+                      player => !deck.playedBy.map(x => x.player).includes(player)
+                    );
+                    if (unplayedBy.length === 0) return "";
+                    return (
+                      <>
+                        Has not been played by:{" "}
+                        {unplayedBy.reduce(
+                          (acc, x, i) => (
+                            <span>
+                              <strong>
+                                <i>{_.capitalize(x)}</i>
+                              </strong>
+                              {i !== 0 ? ", " : ""} {acc}
+                            </span>
+                          ),
+                          <span></span>
+                        )}
+                      </>
+                    );
+                  })()}
                 </Card.Description>
               </Card.Content>
             </Card>
@@ -223,6 +229,8 @@ export const WinRates: React.FunctionComponent<{
           ]
     );
     const overallLosses = overallGames - overallWins;
+
+    console.log(player, overallGames, overallWins, overallLosses);
     return decks.map(deck => {
       const playerTotal = countPlacements(
         magicData,
@@ -381,7 +389,11 @@ export const Analysis: React.FunctionComponent<{ magicData: MagicData }> = ({ ma
       </Segment>
       <Header size="large">Deck Placement Statistics</Header>
       <Overflow>
-        <PlacementStatistics stats={[["Overall", top], ...playerDeckStats]} decks={deckArr} players={playerArr} />
+        <PlacementStatistics
+          stats={[["Overall", top], ...playerDeckStats]}
+          decks={deckArr}
+          players={["Overall", ...playerArr]}
+        />
       </Overflow>
       <Header size="large">
         Player Win Rates
