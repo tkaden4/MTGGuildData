@@ -223,9 +223,9 @@ export const WinRates: React.FunctionComponent<{
       unweighted
         ? [[1, 1]]
         : [
-            [1, 0.6],
-            [2, 0.3],
-            [3, 0.1]
+            [1, 0.8],
+            [2, 0.15],
+            [3, 0.05]
           ]
     );
     const overallLosses = overallGames - overallWins;

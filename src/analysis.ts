@@ -181,20 +181,7 @@ export function countPlacements(
     )
     .toArray();
   return arr.reduce((acc, x) => {
-    const weight = (placements.find(y => y[0] === x.relativePlacement) ?? [1, 1])[1] ?? 1;
+    const weight = (placements.find(y => y[0] === x.relativePlacement) ?? [0, 0])[1] ?? 0;
     return acc + weight;
   }, 0);
-}
-
-export function normalizeToPoints(data: MagicData) {
-  const df = data.df;
-  const res = df
-    .groupBy(x => x.game)
-    .select(gameGroup => {
-      const sum = gameGroup.getSeries("placement").sum();
-      return gameGroup.select(player => ({
-        ...player
-      }));
-    });
-  return res.toArray().flatMap(x => x.toArray());
 }
