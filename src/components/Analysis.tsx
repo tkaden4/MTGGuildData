@@ -126,17 +126,17 @@ export const DeckSummary = ({
   }[];
 }) => {
   const playedSubsets = fpSet.fromArray(fpSet.getEq(eqString))(
-    flatten(magicData.games.map((game) => subsets(eqString, new Set(_.keys(game.decks)), 2)))
+    flatten(magicData.games.map((game) => subsets(eqString, new Set(_.keys(game.decks)), 3)))
   );
 
   const possibleSubsets = fpSet.fromArray(fpSet.getEq(eqString))(
-    subsets(eqString, new Set(magicData.decks), 2).filter((x) => x.size <= 2)
+    subsets(eqString, new Set(magicData.decks), 3).filter((x) => x.size <= 3)
   );
 
   const difference = fpSet.difference(fpSet.getEq(eqString))(possibleSubsets, playedSubsets);
   const unplayed = fpSet.filter((x: Set<string>) => x.size <= 5)(difference);
 
-  const couples = Array.from(fpSet.filter((x: Set<string>) => x.size === 2)(unplayed));
+  const couples = Array.from(fpSet.filter((x: Set<string>) => x.size === 3)(unplayed));
 
   return (
     <React.Fragment>
@@ -152,7 +152,7 @@ export const DeckSummary = ({
                 }}
               ></div>
               <Card.Content>
-                <Card.Header>{deck.deck === "Eggs" ? "🥚🥚🥚" : deck.deck}</Card.Header>
+                <Card.Header>{deck.deck.toLowerCase() === "eggs" ? "🥚🥚🥚" : deck.deck}</Card.Header>
                 <Card.Meta>Played {deck.timesPlayed} times</Card.Meta>
                 <Card.Description>
                   {(function () {
