@@ -1,7 +1,6 @@
 import * as React from "react";
 import { Table } from "semantic-ui-react";
-import { Game, MagicData } from "../analysis";
-import _ from "lodash";
+import { Game, MagicData } from "../data";
 import { Overflow } from "./Analysis";
 
 export interface Props {

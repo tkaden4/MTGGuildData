@@ -1,14 +1,15 @@
+import { array, flatten } from "fp-ts/lib/Array";
+import { Eq, eqString } from "fp-ts/lib/Eq";
 import { tuple } from "fp-ts/lib/function";
+import { ordString } from "fp-ts/lib/Ord";
+import * as fpSet from "fp-ts/lib/Set";
+import { insert, remove, toArray } from "fp-ts/lib/Set";
 import _ from "lodash";
 import * as React from "react";
 import Plot from "react-plotly.js";
-import { Card, Header, Table, Segment, Form, Grid, Divider } from "semantic-ui-react";
-import { remove, toArray, insert } from "fp-ts/lib/Set";
-import * as fpSet from "fp-ts/lib/Set";
-import { deckStatistics, MagicData, summary, countPlacements } from "../analysis";
-import { ordString } from "fp-ts/lib/Ord";
-import { eqString, Eq } from "fp-ts/lib/Eq";
-import { array, flatten } from "fp-ts/lib/Array";
+import { Card, Divider, Form, Grid, Header, Segment, Table } from "semantic-ui-react";
+import { countPlacements, deckStatistics } from "../analysis";
+import { MagicData } from "../data";
 
 export const trunc = (n: number, to: number): string => (Math.round(n * 10 ** to) / 10 ** to).toFixed(to);
 
@@ -18,7 +19,7 @@ export function subsets<T>(eq: Eq<T>, set: Set<T>, min: number = 1): Array<Set<T
   } else {
     const fst = set.values().next().value as T;
     const other = subsets(eq, remove(eq)(fst)(set));
-    return array.chain(other, set => [insert(eq)(fst)(set), set]);
+    return array.chain(other, (set) => [insert(eq)(fst)(set), set]);
   }
 }
 
@@ -27,7 +28,7 @@ const colors = {
   white: "cornsilk",
   blue: "darkblue",
   red: "firebrick",
-  black: "#0a0a0c"
+  black: "#0a0a0c",
 };
 
 export const deckData = {
@@ -40,7 +41,7 @@ export const deckData = {
   rakdos: { colors: [colors.red, colors.black], path: require("../../guilds/rakdos.jpg") },
   golgari: { colors: [colors.black, colors.green], path: require("../../guilds/golgari.jpg") },
   orzhov: { colors: [colors.black, colors.white], path: require("../../guilds/orzhov.jpg") },
-  selesnya: { colors: [colors.green, colors.white], path: require("../../guilds/selesnya.jpg") }
+  selesnya: { colors: [colors.green, colors.white], path: require("../../guilds/selesnya.jpg") },
 } as const;
 
 export const Overflow = ({ children }) => {
@@ -50,7 +51,7 @@ export const Overflow = ({ children }) => {
 export const PlacementStatistics = ({
   stats,
   decks,
-  players
+  players,
 }: {
   stats: [
     string,
@@ -63,7 +64,7 @@ export const PlacementStatistics = ({
   decks: string[];
   players: string[];
 }) => {
-  const ordered = players.map(x => stats.find(y => y[0] === x));
+  const ordered = players.map((x) => stats.find((y) => y[0] === x));
   return (
     <Table celled compact inverted striped textAlign="center" unstackable>
       <Table.Header>
@@ -78,9 +79,9 @@ export const PlacementStatistics = ({
       </Table.Header>
       <Table.Body>
         {ordered
-          .filter(p => players.includes(p[0]))
+          .filter((p) => players.includes(p[0]))
           .map(([person, { stats: stat, overallDeviation, overallMean }], i) => {
-            const ordered = decks.map(deck => stat.find(x => x.deck === deck));
+            const ordered = decks.map((deck) => stat.find((x) => x.deck === deck));
             return (
               <React.Fragment key={i}>
                 <Table.Row>
@@ -112,7 +113,7 @@ export const PlacementStatistics = ({
 
 export const DeckSummary = ({
   magicData,
-  deckSummary
+  deckSummary,
 }: {
   magicData: MagicData;
   deckSummary: {
@@ -125,11 +126,11 @@ export const DeckSummary = ({
   }[];
 }) => {
   const playedSubsets = fpSet.fromArray(fpSet.getEq(eqString))(
-    flatten(magicData.games.map(game => subsets(eqString, new Set(_.keys(game.decks)), 2)))
+    flatten(magicData.games.map((game) => subsets(eqString, new Set(_.keys(game.decks)), 2)))
   );
 
   const possibleSubsets = fpSet.fromArray(fpSet.getEq(eqString))(
-    subsets(eqString, new Set(magicData.decks), 2).filter(x => x.size <= 2)
+    subsets(eqString, new Set(magicData.decks), 2).filter((x) => x.size <= 2)
   );
 
   const difference = fpSet.difference(fpSet.getEq(eqString))(possibleSubsets, playedSubsets);
@@ -147,16 +148,16 @@ export const DeckSummary = ({
               <div
                 style={{
                   background: `linear-gradient(to right, ${fst} 0%, ${fst} 50%, ${snd} 50%, ${snd} 100%)`,
-                  height: "10px"
+                  height: "10px",
                 }}
               ></div>
               <Card.Content>
                 <Card.Header>{deck.deck === "Eggs" ? "🥚🥚🥚" : deck.deck}</Card.Header>
                 <Card.Meta>Played {deck.timesPlayed} times</Card.Meta>
                 <Card.Description>
-                  {(function() {
+                  {(function () {
                     const unplayedBy = magicData.players.filter(
-                      player => !deck.playedBy.map(x => x.player).includes(player)
+                      (player) => !deck.playedBy.map((x) => x.player).includes(player)
                     );
                     if (unplayedBy.length === 0) return "";
                     return (
@@ -185,7 +186,7 @@ export const DeckSummary = ({
       <Segment textAlign="center">
         <Overflow>
           <Plot
-            data={[{ type: "bar", x: deckSummary.map(x => x.deck), y: deckSummary.map(y => y.timesPlayed) }]}
+            data={[{ type: "bar", x: deckSummary.map((x) => x.deck), y: deckSummary.map((y) => y.timesPlayed) }]}
             layout={{ title: "Usage per deck" }}
             config={{ responsive: false }}
           />
@@ -207,14 +208,14 @@ export const WinRates: React.FunctionComponent<{
   decks: string[];
   players: string[];
 }> = ({ magicData, unweighted = false, decks, players }) => {
-  const pdata = players.map(x => magicData.players.find(y => y === x));
-  const results = pdata.map(player => {
+  const pdata = players.map((x) => magicData.players.find((y) => y === x));
+  const results = pdata.map((player) => {
     const overallGames = countPlacements(magicData, [player], magicData.decks, [
       [1, 1],
       [2, 1],
       [3, 1],
       [4, 1],
-      [5, 1]
+      [5, 1],
     ]);
     const overallWins = countPlacements(
       magicData,
@@ -225,13 +226,13 @@ export const WinRates: React.FunctionComponent<{
         : [
             [1, 0.8],
             [2, 0.15],
-            [3, 0.05]
+            [3, 0.05],
           ]
     );
     const overallLosses = overallGames - overallWins;
 
     console.log(player, overallGames, overallWins, overallLosses);
-    return decks.map(deck => {
+    return decks.map((deck) => {
       const playerTotal = countPlacements(
         magicData,
         [player],
@@ -241,7 +242,7 @@ export const WinRates: React.FunctionComponent<{
           [2, 1],
           [3, 1],
           [4, 1],
-          [5, 1]
+          [5, 1],
         ]
       );
       const wins = countPlacements(
@@ -253,7 +254,7 @@ export const WinRates: React.FunctionComponent<{
           : [
               [1, 0.8],
               [2, 0.15],
-              [3, 0.05]
+              [3, 0.05],
             ]
       );
       const losses = playerTotal - wins;
@@ -266,7 +267,7 @@ export const WinRates: React.FunctionComponent<{
         losses,
         winRate: wins / (playerTotal || 1),
         lossRate: losses / (playerTotal || 1),
-        noData: wins === losses && losses === 0
+        noData: wins === losses && losses === 0,
       };
     });
   });
@@ -286,7 +287,7 @@ export const WinRates: React.FunctionComponent<{
       <Table.Body>
         {results.map((personalStats, i) => {
           const person = personalStats[0]?.player ?? "—";
-          const ordered = decks.map(deck => personalStats.find(x => x.deck === deck));
+          const ordered = decks.map((deck) => personalStats.find((x) => x.deck === deck));
           return (
             <React.Fragment key={i}>
               <Table.Row>
@@ -324,13 +325,13 @@ export const WinRates: React.FunctionComponent<{
 
 export const Analysis: React.FunctionComponent<{ magicData: MagicData }> = ({ magicData }) => {
   const top = deckStatistics(magicData, magicData.players);
-  const playerDeckStats = magicData.players.map(player => tuple(player, deckStatistics(magicData, [player])));
+  const playerDeckStats = magicData.players.map((player) => tuple(player, deckStatistics(magicData, [player])));
 
   const [parameters, setParameters] = React.useState({ players: new Set([]), decks: new Set([]) });
   React.useEffect(() => {
     setParameters({
       players: new Set(magicData.players),
-      decks: new Set(magicData.decks)
+      decks: new Set(magicData.decks),
     });
   }, [magicData]);
 
@@ -356,7 +357,7 @@ export const Analysis: React.FunctionComponent<{ magicData: MagicData }> = ({ ma
                       ...parameters,
                       players: p.checked
                         ? insert(eqString)(player)(parameters.players)
-                        : remove(eqString)(player)(parameters.players)
+                        : remove(eqString)(player)(parameters.players),
                     });
                   }}
                   type="checkbox"
@@ -377,7 +378,7 @@ export const Analysis: React.FunctionComponent<{ magicData: MagicData }> = ({ ma
                       ...parameters,
                       decks: p.checked
                         ? insert(eqString)(deck)(parameters.decks)
-                        : remove(eqString)(deck)(parameters.decks)
+                        : remove(eqString)(deck)(parameters.decks),
                     });
                   }}
                   label={deck}
