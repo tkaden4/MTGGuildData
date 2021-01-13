@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "build": "parcel build src/index.html --out-dir docs --public-url ./MTGGuildData/"
+    "build": "parcel build src/index.html --out-dir docs --public-url /MTGGuildData/"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.149",
