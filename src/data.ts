@@ -65,7 +65,7 @@ export const toMagicData = (data: unknown): MagicData => {
   const byGame = _.zip(...games).map((x) =>
     somes(
       x.map((y, i) =>
-        option.map(fromPredicate<string>((from) => from !== "")(y ?? ""), (person: string) => ({
+        option.map(fromPredicate<string>((from) => from.trim() !== "")(y ?? ""), (person: string) => ({
           player: _.capitalize(_.split(person, " ")[1].trim()),
           deck: decks[i],
           placement: +_.split(person, " ")[0],
@@ -127,7 +127,7 @@ export function getSeasons(data: string[][]) {
 }
 
 export function parseSeason(season: string[][]) {
-  const placementRegex = /(\d+)\s+(\w+)/;
+  const placementRegex = /(\d+\.?\d*)\s+(\w+)/;
   const deckNames = season.map((deckEntry) => deckEntry[0].trim().toLowerCase());
   const entries = season.map((entries) => _.drop(entries).filter((x) => x.trim() === "" || placementRegex.test(x)));
 
