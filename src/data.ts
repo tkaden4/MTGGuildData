@@ -40,6 +40,7 @@ export const magicData = [
   "https://docs.google.com/spreadsheets/d/1-4TG_nvx3o6YtySNK7nMNnz2W5UnSk2UxYi2FBqAoB0/export?format=csv",
   "https://docs.google.com/spreadsheets/d/1-4TG_nvx3o6YtySNK7nMNnz2W5UnSk2UxYi2FBqAoB0/export?format=csv&gid=1054574065",
   "https://docs.google.com/spreadsheets/d/1-4TG_nvx3o6YtySNK7nMNnz2W5UnSk2UxYi2FBqAoB0/export?format=csv&gid=934621379",
+  "https://docs.google.com/spreadsheets/d/1-4TG_nvx3o6YtySNK7nMNnz2W5UnSk2UxYi2FBqAoB0/export?format=csv&gid=816131673",
 ];
 
 export const getAllData = async () => {
