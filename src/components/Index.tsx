@@ -1,8 +1,7 @@
-import { taskEither } from "fp-ts/lib/TaskEither";
 import * as React from "react";
 import { Container, Divider, Header, Loader, Segment } from "semantic-ui-react";
 import { summary } from "../analysis";
-import { getMagicData, MagicData } from "../data";
+import { getAllData, MagicData } from "../data";
 import { Analysis, DeckSummary } from "./Analysis";
 import { DataTable } from "./DataTable";
 
@@ -34,7 +33,10 @@ export const Index = () => {
   const [tableData, setTableData] = React.useState<MagicData[]>([]);
 
   React.useEffect(() => {
-    taskEither.map(getMagicData, (data) => setTableData(data))();
+    (async () => {
+      const allData = await getAllData();
+      setTableData(allData);
+    })();
   }, []);
 
   return (

@@ -1,7 +1,6 @@
 import axios from "axios";
 import * as dataForge from "data-forge";
 import { fromPredicate, option } from "fp-ts/lib/Option";
-import * as taskEither from "fp-ts/lib/TaskEither";
 import _ from "lodash";
 import Papa from "papaparse";
 import * as un from "ununknown";
@@ -37,24 +36,32 @@ export interface PlayerData {
   relativePlacement: number;
 }
 
-export const getMagicData = taskEither.tryCatch(
-  () =>
-    axios
-      .get("https://docs.google.com/spreadsheets/d/1-4TG_nvx3o6YtySNK7nMNnz2W5UnSk2UxYi2FBqAoB0/export?format=csv")
-      .then((response) => response.data as string)
-      .then((bodyData) => Papa.parse(bodyData))
-      .then((result) => getSeasons(result.data as any))
-      .then((seasons) => {
-        console.log(seasons);
-        return seasons;
-      })
-      .then((resultData) => resultData.map((data) => parseSeason(data)))
-      .then((result) => {
-        console.log(result);
-        return result;
-      }),
-  (e) => (e instanceof Error ? e : new Error("Could not fetch magic data"))
-);
+export const magicData = [
+  "https://docs.google.com/spreadsheets/d/1-4TG_nvx3o6YtySNK7nMNnz2W5UnSk2UxYi2FBqAoB0/export?format=csv",
+  "https://docs.google.com/spreadsheets/d/1-4TG_nvx3o6YtySNK7nMNnz2W5UnSk2UxYi2FBqAoB0/export?format=csv&gid=1054574065",
+  "https://docs.google.com/spreadsheets/d/1-4TG_nvx3o6YtySNK7nMNnz2W5UnSk2UxYi2FBqAoB0/export?format=csv&gid=934621379",
+];
+
+export const getAllData = async () => {
+  const data = await Promise.all(magicData.map(async (data, i) => [i, (await getMagicData(data))[0]] as const));
+  return _.sortBy(data, ([a]) => a).map(([, b]) => b);
+};
+
+export const getMagicData = (season: string) =>
+  axios
+    .get(season)
+    .then((response) => response.data as string)
+    .then((bodyData) => Papa.parse(bodyData))
+    .then((result) => getSeasons(result.data as any))
+    .then((seasons) => {
+      console.log(seasons);
+      return seasons;
+    })
+    .then((resultData) => resultData.map((data) => parseSeason(data)))
+    .then((result) => {
+      console.log(result);
+      return result;
+    });
 
 export const toMagicData = (data: unknown): MagicData => {
   const parser = un.array.of(un.array.of(un.thing.is.string));
