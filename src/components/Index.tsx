@@ -1,12 +1,15 @@
 import * as React from "react";
-import { Container, Divider, Header, Loader, Segment } from "semantic-ui-react";
-import { summary } from "../analysis";
+import { Container, Divider, Header, Loader, Segment, Table } from "semantic-ui-react";
+import { playersWinRates, summary } from "../analysis";
 import { getAllData, MagicData } from "../data";
-import { Analysis, DeckSummary } from "./Analysis";
+import { Analysis, DeckSummary, trunc } from "./Analysis";
 import { DataTable } from "./DataTable";
 
 export const PerSeason = ({ season, seasonNumber }: { season: MagicData; seasonNumber: number }) => {
   const sum = summary(season);
+
+  const deckWinrates = playersWinRates(season);
+  const decks = season.decks;
   return (
     <>
       {season.games.length > 0 ? (
@@ -19,6 +22,23 @@ export const PerSeason = ({ season, seasonNumber }: { season: MagicData; seasonN
             <Header size="large">Deck Usage</Header>
             <DeckSummary magicData={season} deckSummary={sum} />
             <Analysis magicData={season} />
+            <Header size="large">Deck Winrates</Header>
+            <Table celled compact inverted striped unstackable textAlign="center">
+              <Table.Header>
+                <Table.Row>
+                  {decks.map((deck, i) => (
+                    <Table.HeaderCell key={i}>{deck}</Table.HeaderCell>
+                  ))}
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                <Table.Row>
+                  {deckWinrates.map(([deck, winrate], i) => (
+                    <Table.Cell key={i}>{trunc(winrate, 2)}</Table.Cell>
+                  ))}
+                </Table.Row>
+              </Table.Body>
+            </Table>
           </Container>
           <Divider hidden />
         </>

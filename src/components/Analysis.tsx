@@ -8,7 +8,7 @@ import _ from "lodash";
 import * as React from "react";
 import Plot from "react-plotly.js";
 import { Card, Divider, Form, Grid, Header, Segment, Table } from "semantic-ui-react";
-import { countPlacements, deckStatistics } from "../analysis";
+import { countDeckWins, countPlacements, deckStatistics } from "../analysis";
 import { MagicData } from "../data";
 
 export const trunc = (n: number, to: number): string => (Math.round(n * 10 ** to) / 10 ** to).toFixed(to);
@@ -273,53 +273,55 @@ export const WinRates: React.FunctionComponent<{
   });
 
   return (
-    <Table celled compact inverted striped unstackable textAlign="center">
-      <Table.Header>
-        <Table.Row>
-          <Table.HeaderCell width="1">Player</Table.HeaderCell>
-          <Table.HeaderCell width="1"></Table.HeaderCell>
-          <Table.HeaderCell width="1">Overall</Table.HeaderCell>
-          {decks.map((deck, i) => (
-            <Table.HeaderCell key={i}>{deck}</Table.HeaderCell>
-          ))}
-        </Table.Row>
-      </Table.Header>
-      <Table.Body>
-        {results.map((personalStats, i) => {
-          const person = personalStats[0]?.player ?? "—";
-          const ordered = decks.map((deck) => personalStats.find((x) => x.deck === deck));
-          return (
-            <React.Fragment key={i}>
-              <Table.Row>
-                <Table.Cell collapsing rowSpan={2}>
-                  {_.capitalize(person).trim()}
-                </Table.Cell>
-                <Table.Cell collapsing>Win %</Table.Cell>
-                <Table.Cell collapsing>
-                  {ordered[0]?.overallWinRate === undefined ? "—" : trunc(ordered[0]?.overallWinRate, 2)}
-                </Table.Cell>
-                {ordered.map((deckRate, i) => (
-                  <Table.Cell collapsing key={i}>
-                    {deckRate === undefined || deckRate.noData ? "—" : trunc(deckRate.winRate, 2)}
+    <>
+      <Table celled compact inverted striped unstackable textAlign="center">
+        <Table.Header>
+          <Table.Row>
+            <Table.HeaderCell width="1">Player</Table.HeaderCell>
+            <Table.HeaderCell width="1"></Table.HeaderCell>
+            <Table.HeaderCell width="1">Overall</Table.HeaderCell>
+            {decks.map((deck, i) => (
+              <Table.HeaderCell key={i}>{deck}</Table.HeaderCell>
+            ))}
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {results.map((personalStats, i) => {
+            const person = personalStats[0]?.player ?? "—";
+            const ordered = decks.map((deck) => personalStats.find((x) => x.deck === deck));
+            return (
+              <React.Fragment key={i}>
+                <Table.Row>
+                  <Table.Cell collapsing rowSpan={2}>
+                    {_.capitalize(person).trim()}
                   </Table.Cell>
-                ))}
-              </Table.Row>
-              <Table.Row>
-                <Table.Cell collapsing>Loss %</Table.Cell>
-                <Table.Cell collapsing>
-                  {ordered[0]?.overallLossRate === undefined ? "—" : trunc(ordered[0]?.overallLossRate, 2)}
-                </Table.Cell>
-                {ordered.map((deckRate, i) => (
-                  <Table.Cell collapsing key={i}>
-                    {deckRate === undefined || deckRate.noData ? "—" : trunc(deckRate.lossRate, 2)}
+                  <Table.Cell collapsing>Win %</Table.Cell>
+                  <Table.Cell collapsing>
+                    {ordered[0]?.overallWinRate === undefined ? "—" : trunc(ordered[0]?.overallWinRate, 2)}
                   </Table.Cell>
-                ))}
-              </Table.Row>
-            </React.Fragment>
-          );
-        })}
-      </Table.Body>
-    </Table>
+                  {ordered.map((deckRate, i) => (
+                    <Table.Cell collapsing key={i}>
+                      {deckRate === undefined || deckRate.noData ? "—" : trunc(deckRate.winRate, 2)}
+                    </Table.Cell>
+                  ))}
+                </Table.Row>
+                <Table.Row>
+                  <Table.Cell collapsing>Loss %</Table.Cell>
+                  <Table.Cell collapsing>
+                    {ordered[0]?.overallLossRate === undefined ? "—" : trunc(ordered[0]?.overallLossRate, 2)}
+                  </Table.Cell>
+                  {ordered.map((deckRate, i) => (
+                    <Table.Cell collapsing key={i}>
+                      {deckRate === undefined || deckRate.noData ? "—" : trunc(deckRate.lossRate, 2)}
+                    </Table.Cell>
+                  ))}
+                </Table.Row>
+              </React.Fragment>
+            );
+          })}
+        </Table.Body>
+      </Table>
+    </>
   );
 };
 
@@ -337,6 +339,8 @@ export const Analysis: React.FunctionComponent<{ magicData: MagicData }> = ({ ma
 
   const playerArr = toArray(ordString)(parameters.players);
   const deckArr = toArray(ordString)(parameters.decks);
+
+  console.log(magicData.decks.map((x) => [x, countDeckWins(magicData, x)]));
 
   return (
     <>

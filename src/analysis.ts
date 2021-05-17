@@ -94,3 +94,25 @@ export function countPlacements(
     return acc + weight;
   }, 0);
 }
+
+export function countDeckWins(data: MagicData, deck: string): number {
+  return data.games
+    .map((game) => {
+      return Object.values(game.decks)
+        .filter((playerData) => playerData.deck === deck)
+        .filter((x) => x.placement === 1).length;
+    })
+    .reduce((acc, x) => acc + x, 0);
+}
+
+export function countDeckGames(data: MagicData, deck: string): number {
+  return data.games
+    .map((game) => {
+      return Object.values(game.decks).filter((playerData) => playerData.deck === deck).length;
+    })
+    .reduce((acc, x) => acc + x, 0);
+}
+
+export function playersWinRates(data: MagicData) {
+  return data.decks.map((deck) => [deck, countDeckWins(data, deck) / countDeckGames(data, deck)] as const);
+}
